@@ -1,4 +1,4 @@
-package controller
+package category
 
 import (
 	"database/sql"
