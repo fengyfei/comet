@@ -21,7 +21,7 @@ func main() {
 	c := admin.New(dbConn)
 	c.RegisterRouter(router)
 
-	categoryContoller := category.Register(dbConn, "students", "test", router)
+	category.Register(dbConn, "students", "test", router)
 
 	router.Run(":8000")
 }
