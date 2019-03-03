@@ -3,15 +3,39 @@ package mysql
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
+)
+
+const (
+	mysqlCreateTable = iota
+	mysqlInsert
+	mysqlUpdateStatus
+	mysqlUpdateName
+	mysqlSelectByParentID
 )
 
 var (
 	errInvaildInsert         = errors.New("insert comment: insert affected 0 rows")
 	errInvalidChangeCategory = errors.New("change status: affected 0 rows")
+	categorySQLFormatStr     = []string{
+		`CREATE TABLE IF NOT EXISTS %s(
+			categoryId INT(11) NOT NULL AUTO_INCREMENT COMMENT '类别id',
+			parentId INT(11) DEFAULT NULL  COMMENT '父类别id',
+			name VARCHAR(50) DEFAULT NULL COMMENT '类别名称',
+			status TINYINT(1) DEFAULT '1' COMMENT '状态1-在售，2-废弃',
+			createTime DATETIME DEFAULT current_timestamp COMMENT '创建时间',
+			PRIMARY KEY (categoryId),
+			INDEX(parentId)
+		)ENGINE=InnoDB AUTO_INCREMENT=10000 DEFAULT CHARSET=utf8mb4`,
+		`INSERT INTO %s(parentId,name) VALUES (?,?)`,
+		`UPDATE %s SET status = ? WHERE categoryId = ? LIMIT 1`,
+		`UPDATE %s SET name = ? WHERE categoryId = ? LIMIT 1`,
+		`SELECT * FROM %s WHERE parentId = ?`,
+	}
 )
 
-//目录
+// Category -
 type Category struct {
 	CategoryId uint
 	ParentId   uint //为0则是根目录
@@ -20,19 +44,17 @@ type Category struct {
 	CreateTime time.Time
 }
 
-func CreateDB(db *sql.DB, createDB string) error {
-	_, err := db.Exec(createDB)
+// CreateTable -
+func CreateTable(db *sql.DB, tableName string) error {
+	sql := fmt.Sprintf(categorySQLFormatStr[mysqlCreateTable], tableName)
+	_, err := db.Exec(sql)
 	return err
 }
 
-func CreateTable(db *sql.DB, createTable string) error {
-	_, err := db.Exec(createTable)
-	return err
-}
-
-//自动设定 id 和 status状态和 创建时间
-func InsertCategory(db *sql.DB, insert string, parentId uint, name string) (uint, error) {
-	result, err := db.Exec(insert, parentId, name)
+//自动设定 id 和 status状态和 创建时间 -
+func InsertCategory(db *sql.DB, tableName string, parentId uint, name string) (uint, error) {
+	sql := fmt.Sprintf(categorySQLFormatStr[mysqlInsert], tableName)
+	result, err := db.Exec(sql, parentId, name)
 	if err != nil {
 		return 0, err
 	}
@@ -50,8 +72,9 @@ func InsertCategory(db *sql.DB, insert string, parentId uint, name string) (uint
 }
 
 //改变目录状态
-func ChangeCategoryStatus(db *sql.DB, change string, category uint, status int8) error {
-	result, err := db.Exec(change, status, category)
+func ChangeCategoryStatus(db *sql.DB, tableName string, category uint, status int8) error {
+	sql := fmt.Sprintf(categorySQLFormatStr[mysqlUpdateStatus], tableName)
+	result, err := db.Exec(sql, status, category)
 	if err != nil {
 		return err
 	}
@@ -64,8 +87,9 @@ func ChangeCategoryStatus(db *sql.DB, change string, category uint, status int8)
 }
 
 //改变目录名称
-func ChangeCategoryName(db *sql.DB, change string, category uint, name string) error {
-	result, err := db.Exec(change, name, category)
+func ChangeCategoryName(db *sql.DB, tableName string, category uint, name string) error {
+	sql := fmt.Sprintf(categorySQLFormatStr[mysqlUpdateName], tableName)
+	result, err := db.Exec(sql, name, category)
 	if err != nil {
 		return err
 	}
@@ -77,8 +101,8 @@ func ChangeCategoryName(db *sql.DB, change string, category uint, name string) e
 	return nil
 }
 
-//显示一个父亲的所有孩子
-func LisitChirldrenByParentId(db *sql.DB, Lisit string, parentId uint) ([]*Category, error) {
+// LisitChirldrenByParentId -
+func LisitChirldrenByParentId(db *sql.DB, tableName string, parentId uint) ([]*Category, error) {
 	var (
 		categoryId uint
 		name       string
@@ -87,8 +111,8 @@ func LisitChirldrenByParentId(db *sql.DB, Lisit string, parentId uint) ([]*Categ
 
 		categorys []*Category
 	)
-
-	rows, err := db.Query(Lisit, parentId)
+	sql := fmt.Sprintf(categorySQLFormatStr[mysqlSelectByParentID], tableName)
+	rows, err := db.Query(sql, parentId)
 	if err != nil {
 		return nil, err
 	}

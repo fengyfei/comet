@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/TechCatsLab/gin-sor/config"
 	"github.com/TechCatsLab/gin-sor/controller"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -18,7 +17,7 @@ func main() {
 		panic(err)
 	}
 
-	cnf := new(config.Config)
+	cnf := new(controller.Config)
 	cnf.CategoryDB = "newstudents"
 	cnf.CategoryTable = "user"
 

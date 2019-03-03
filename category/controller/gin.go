@@ -2,142 +2,155 @@ package controller
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 
+	"github.com/fengyfei/comet/category/model/mysql"
 	"github.com/gin-gonic/gin"
-	"github.com/logging/logrus"
-
-	"github.com/TechCatsLab/gin-sor/config"
-	"github.com/TechCatsLab/gin-sor/service"
 )
 
+// Controller -
 type Controller struct {
-	service *service.TransactService
+	db        *sql.DB
+	tableName string
+	dbName    string
 }
 
-func Register(db *sql.DB, cnf *config.Config, r gin.IRouter) error {
-	c := New(db, cnf)
+// Config -
+type Config struct {
+	CategoryDB    string
+	CategoryTable string
+}
 
-	if err := c.CreateDB(); err != nil {
-		return err
-	}
+// Register -
+func Register(db *sql.DB, tableName string, dbName string, r gin.IRouter) error {
+	c := New(db, tableName, dbName)
 
 	if err := c.CreateTable(); err != nil {
+		log.Fatal(err)
 		return err
 	}
 
 	r.POST("/api/v1/category/create", c.Insert)
 	r.POST("/api/v1/category/modify/status", c.ChangeCategoryStatus)
 	r.POST("/api/v1/category/modify/name", c.ChangeCategoryName)
-	r.POST("/api/v1/category/children", c.LisitChirldrenByParentId)
+	r.POST("/api/v1/category/children", c.LisitChirldrenByParentID)
 	return nil
 }
 
-func New(db *sql.DB, c *config.Config) *Controller {
+// New -
+func New(db *sql.DB, tableName string, dbName string) *Controller {
 	return &Controller{
-		service: service.NewCategoryService(c, db),
+		db:        db,
+		tableName: tableName,
+		dbName:    dbName,
 	}
 }
 
-func (con *Controller) CreateDB() error {
-	return con.service.CreateDB()
-}
-
+// CreateTable -
 func (con *Controller) CreateTable() error {
-	return con.service.CreateTable()
+	err := mysql.CreateTable(con.db, con.tableName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return err
 }
 
+// Insert -
 func (con *Controller) Insert(c *gin.Context) {
 	var (
 		req struct {
-			ParentId uint   `json:"parentId"`
+			ParentID uint   `json:"parentId"`
 			Name     string `json:"name"`
 		}
 	)
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logrus.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
 
-	id, err := con.service.Insert(req.ParentId, req.Name)
+	_, err := mysql.InsertCategory(con.db, con.tableName, req.ParentID, req.Name)
 	if err != nil {
-		logrus.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "Insert", "id": id})
+	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
 	return
 }
 
+// ChangeCategoryStatus -
 func (con *Controller) ChangeCategoryStatus(c *gin.Context) {
 	var (
 		req struct {
-			CategoryId uint `json:"categoryId"`
+			CategoryID uint `json:"categoryId"`
 			Status     int8 `json:"status"`
 		}
 	)
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logrus.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
 
-	err := con.service.ChangeCategoryStatus(req.CategoryId, req.Status)
+	err := mysql.ChangeCategoryStatus(con.db, con.tableName, req.CategoryID, req.Status)
 	if err != nil {
-		logrus.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "ChangeCategoryStatus"})
+	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
 	return
 }
 
+// ChangeCategoryName -
 func (con *Controller) ChangeCategoryName(c *gin.Context) {
 	var (
 		req struct {
-			CategoryId uint   `json:"categoryId"`
+			CategoryID uint   `json:"categoryId"`
 			Name       string `json:"name"`
 		}
 	)
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logrus.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
 
-	err := con.service.ChangeCategoryName(req.CategoryId, req.Name)
+	err := mysql.ChangeCategoryName(con.db, con.tableName, req.CategoryID, req.Name)
 	if err != nil {
-		logrus.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "ChangeCategoryName"})
+	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
 	return
 }
 
-func (con *Controller) LisitChirldrenByParentId(c *gin.Context) {
+// LisitChirldrenByParentID -
+func (con *Controller) LisitChirldrenByParentID(c *gin.Context) {
 	var (
 		req struct {
-			ParentId uint `json:"parentId"`
+			ParentID uint `json:"parentId"`
 		}
 	)
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logrus.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
 
-	categorys, err := con.service.LisitChirldrenByParentId(req.ParentId)
+	list, err := mysql.LisitChirldrenByParentId(con.db, con.tableName, req.ParentID)
 	if err != nil {
-		logrus.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "LisitChirldrenByParentId", "category": categorys})
+	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "list": list})
 	return
 }
