@@ -3,14 +3,12 @@ package order
 import (
 	"database/sql"
 	"log"
+	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/base"
-	"github.com/base/constants"
 	"github.com/fengyfei/comet/order/model/mysql"
 	"github.com/gin-gonic/gin"
-	"github.com/logging/logrus"
 )
 
 type Stocker interface {
@@ -26,9 +24,8 @@ type Config struct {
 	OrderTable     string
 	ItemTable      string
 	ClosedInterval int
-
-	Stock Stocker
-	User  UserChecker
+	Stock          Stocker
+	User           UserChecker
 }
 
 type Controller struct {
@@ -59,6 +56,7 @@ func Register(r gin.IRouter, db *sql.DB, cnf Config) error {
 	return nil
 }
 
+// New -
 func New(db *sql.DB, cnf Config) *Controller {
 	return &Controller{
 		db:  db,
@@ -66,18 +64,25 @@ func New(db *sql.DB, cnf Config) *Controller {
 	}
 }
 
+// CreateDB -
 func (ctl *Controller) CreateDB() error {
-	return ctl.service.CreateDB()
+	return mysql.CreateDB(ctl.db, ctl.Cnf.OrderDB)
 }
 
+// CreateOrderTable -
 func (ctl *Controller) CreateOrderTable() error {
-	return ctl.service.CreateOrderTable()
-}
-func (ctl *Controller) CreateItemTable() error {
-	return ctl.service.CreateItemTable()
+	ostore := ctl.Cnf.OrderDB + "." + ctl.Cnf.OrderTable
+	return mysql.CreateTable(ctl.db, ostore)
 }
 
-func (ctl *Controller) Insert(c *server.Context) error {
+// CreateItemTable -
+func (ctl *Controller) CreateItemTable() error {
+	istore := ctl.Cnf.OrderDB + "." + ctl.Cnf.ItemTable
+	return mysql.CreateTable(ctl.db, istore)
+}
+
+// Insert -
+func (ctl *Controller) Insert(c *gin.Context) {
 	var (
 		req struct {
 			UserID     uint64 `json:"userid"`
@@ -94,14 +99,16 @@ func (ctl *Controller) Insert(c *server.Context) error {
 		}
 		err error
 	)
-	if err := c.JSONBody(&req); err != nil {
-		logrus.Error(err)
-		return c.ServeJSON(base.RespStatusAndData(constants.ErrInvalidParam, nil))
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
+		return
 	}
 	promotion, err := strconv.ParseBool(req.Promotion)
 	if err != nil {
-		logrus.Error(err)
-		return c.ServeJSON(base.RespStatusAndData(constants.ErrInvalidParam, nil))
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
+		return
 	}
 
 	times := time.Now()
@@ -116,48 +123,56 @@ func (ctl *Controller) Insert(c *server.Context) error {
 		Created:    times,
 	}
 
-	rep.orderid, err = ctl.service.Insert(order, req.Items)
+	rep.orderid, err = mysql.Insert(order, req.Items, ctl.db)
 	if err != nil {
-		logrus.Error(err)
-		return c.ServeJSON(base.RespStatusAndData(constants.ErrCreateInMysql, nil))
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
+		return
 	}
-	return c.ServeJSON(base.RespStatusAndIDCODEData(constants.ErrSucceed, rep.orderid, rep.ordercode))
+	c.JSON(http.StatusOK, gin.H{"statue": http.StatusOK, "orderid": rep.orderid, "ordercode": rep.ordercode})
+	return
 }
 
 //optional
-func (ctl *Controller) OrderIDByOrderCode(c *server.Context) error {
+func (ctl *Controller) OrderIDByOrderCode(c *gin.Context) {
 	var req struct {
 		Ordercode string `json:"ordercode"`
 	}
-	if err := c.JSONBody(&req); err != nil {
-		logrus.Error(err)
-		return c.ServeJSON(base.RespStatusAndData(constants.ErrOprationInMysql, nil))
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
+		return
 	}
 
-	id, err := ctl.service.OrderIDByOrderCode(req.Ordercode)
+	id, err := mysql.OrderIDByOrderCode(req.Ordercode)
 	if err != nil {
-		logrus.Error(err)
-		return c.ServeJSON(base.RespStatusAndData(constants.ErrOprationInMysql, nil))
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
+		return
 	}
-	return c.ServeJSON(base.RespStatusAndData(constants.ErrSucceed, id))
+	c.JSON(http.StatusOK, gin.H{"statue": http.StatusOK, "id": id})
+	return
 }
 
 //full info for One Order
-func (ctl *Controller) OrderInfoByOrderID(c *server.Context) error {
+func (ctl *Controller) OrderInfoByOrderID(c *gin.Context) {
 	var req struct {
 		OrderId uint32 `json:"orderid"`
 	}
-	if err := c.JSONBody(&req); err != nil {
-		logrus.Error(err)
-		return c.ServeJSON(base.RespStatusAndData(constants.ErrInvalidParam, nil))
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
+		return
 	}
 
-	rep, err := ctl.service.OrderInfoByOrderKey(req.OrderId)
+	rep, err := mysql.SelectByOrderKey(req.OrderId)
 	if err != nil {
-		logrus.Error(err)
-		return c.ServeJSON(base.RespStatusAndData(constants.ErrOprationInMysql, nil))
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
+		return
 	}
-	return c.ServeJSON(base.RespStatusAndTwoData(constants.ErrSucceed, rep.Order, rep.Orm))
+	c.JSON(http.StatusOK, gin.H{"statue": http.StatusOK, "Order": rep.order, "Orm": rep.Orm})
+	return
 }
 
 /*
@@ -168,22 +183,24 @@ mode:
   Consigned  = 3
   Canceled   = 4
 */
-func (ctl *Controller) LisitOrderByUserIDAndStatus(c *server.Context) error {
+func (ctl *Controller) LisitOrderByUserIDAndStatus(c *gin.Context) {
 	var req struct {
 		Userid uint64 `json:"userid"`
 		Status uint8  `json:"status"`
 	}
 
-	if err := c.JSONBody(&req); err != nil {
-		logrus.Error(err)
-		return c.ServeJSON(base.RespStatusAndData(constants.ErrInvalidParam, nil))
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
+		return
 	}
 
-	orders, err := ctl.service.LisitOrderByUserId(req.Userid, req.Status)
+	orders, err := mysql.LisitOrderByUserId(req.Userid, req.Status)
 	if err != nil {
-		logrus.Error(err)
-		return c.ServeJSON(base.RespStatusAndData(constants.ErrOprationInMysql, nil))
+		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
+		return
 	}
-
-	return c.ServeJSON(base.RespStatusAndData(constants.ErrSucceed, orders))
+	c.JSON(http.StatusOK, gin.H{"statue": http.StatusOK, "Orders": orders})
+	return
 }
