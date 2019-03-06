@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	admin "github.com/fengyfei/comet/admin/controller/gin"
+	category "github.com/fengyfei/comet/category/controller/gin"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,6 +20,8 @@ func main() {
 
 	c := admin.New(dbConn)
 	c.RegisterRouter(router)
-	router.Run(":8000")
 
+	category.Register(dbConn, "students", "test", router)
+
+	router.Run(":8000")
 }
