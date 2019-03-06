@@ -24,13 +24,9 @@ func New(db *sql.DB) *Controller {
 
 // RegisterRouter -
 func (c *Controller) RegisterRouter(r gin.IRouter) {
-	type admin struct {
-		Name     string `json:"name"      validate:"required,alphanum,min=6,max=30"`
-		Password string `json:"password"  validete:"printascii,min=6,max=30"`
-	}
-
-	first := admin{"Admin", "111111"}
-	err := mysql.CreateTable(c.db, &first.Name, &first.Password)
+	name := "admin"
+	password := "111111"
+	err := mysql.CreateTable(c.db, &name, &password)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,8 +40,8 @@ func (c *Controller) RegisterRouter(r gin.IRouter) {
 
 func (c *Controller) create(ctx *gin.Context) {
 	var admin struct {
-		Name     string `json:"name"      validate:"required,alphanum,min=2,max=30"`
-		Password string `json:"password"  validete:"printascii,min=6,max=30"`
+		Name     string `json:"name"      binding:"required,alphanum,min=5,max=30"`
+		Password string `json:"password"  binding:"printascii,min=6,max=30"`
 	}
 
 	err := ctx.ShouldBind(&admin)
@@ -71,8 +67,8 @@ func (c *Controller) create(ctx *gin.Context) {
 func (c *Controller) login(ctx *gin.Context) {
 	var (
 		admin struct {
-			Name     string `json:"name" validate:"required,alphanum,min=2,max=30"`
-			Password string `json:"pwd"  validete:"printascii,min=6,max=30"`
+			Name     string `json:"name"      binding:"required,alphanum,min=5,max=30"`
+			Password string `json:"password"  binding:"printascii,min=6,max=30"`
 		}
 	)
 
@@ -84,7 +80,7 @@ func (c *Controller) login(ctx *gin.Context) {
 
 	ID, err := mysql.Login(c.db, &admin.Name, &admin.Password)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError})
+		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		return
 	}
 
@@ -102,8 +98,8 @@ func (c *Controller) login(ctx *gin.Context) {
 func (c *Controller) modifyEmail(ctx *gin.Context) {
 	var (
 		admin struct {
-			ID    uint32 `json:"id"    validate:"required"`
-			Email string `json:"email" validate:"required,email"`
+			ID    uint32 `json:"id"    binding:"required"`
+			Email string `json:"email" binding:"required,email"`
 		}
 	)
 
@@ -125,8 +121,8 @@ func (c *Controller) modifyEmail(ctx *gin.Context) {
 func (c *Controller) modifyMobile(ctx *gin.Context) {
 	var (
 		admin struct {
-			ID     uint32 `json:"id"    validate:"required"`
-			Mobile string `json:"mobile" validate:"required,numeric,len=11"`
+			ID     uint32 `json:"id"     binding:"required"`
+			Mobile string `json:"mobile" binding:"required,numeric,len=11"`
 		}
 	)
 
@@ -148,10 +144,10 @@ func (c *Controller) modifyMobile(ctx *gin.Context) {
 func (c *Controller) modifyPassword(ctx *gin.Context) {
 	var (
 		admin struct {
-			ID          uint32 `json:"id"            validate:"required"`
-			Password    string `json:"password"      validete:"printascii,min=6,max=30"`
-			NewPassword string `json:"newpassword"   validete:"printascii,min=6,max=30"`
-			Confirm     string `json:"confirm"       validete:"printascii,min=6,max=30"`
+			ID          uint32 `json:"id"            binding:"required"`
+			Password    string `json:"password"      binding:"printascii,min=6,max=30"`
+			NewPassword string `json:"newpassword"   binding:"printascii,min=6,max=30"`
+			Confirm     string `json:"confirm"       binding:"printascii,min=6,max=30"`
 		}
 	)
 
