@@ -123,7 +123,7 @@ func (ctl *Controller) Insert(c *gin.Context) {
 		Created:    times,
 	}
 
-	rep.orderid, err = mysql.Insert(order, req.Items, ctl.db, Config.ClosedInterval, Config.OrderDB, Config.OrderTable, Config.ItemTable)
+	rep.orderid, err = mysql.Insert(order, req.Items, ctl.db, ctl.Cnf.ClosedInterval, ctl.Cnf.OrderDB, ctl.Cnf.OrderTable, ctl.Cnf.ItemTable)
 	if err != nil {
 		log.Fatal(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
@@ -143,8 +143,8 @@ func (ctl *Controller) OrderIDByOrderCode(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
-
-	id, err := mysql.OrderIDByOrderCode(req.Ordercode)
+	ostore := ctl.Cnf.OrderDB + "." + ctl.Cnf.OrderTable
+	id, err := mysql.OrderIDByOrderCode(ctl.db, ostore, req.Ordercode)
 	if err != nil {
 		log.Fatal(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
@@ -157,21 +157,22 @@ func (ctl *Controller) OrderIDByOrderCode(c *gin.Context) {
 //full info for One Order
 func (ctl *Controller) OrderInfoByOrderID(c *gin.Context) {
 	var req struct {
-		OrderId uint32 `json:"orderid"`
+		OrderID uint32 `json:"orderid"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Fatal(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
-
-	rep, err := mysql.SelectByOrderKey(req.OrderId)
+	ostore := ctl.Cnf.OrderDB + "." + ctl.Cnf.OrderTable
+	istore := ctl.Cnf.OrderDB + "." + ctl.Cnf.ItemTable
+	rep, err := mysql.SelectByOrderKey(ctl.db, ostore, istore, req.OrderID)
 	if err != nil {
 		log.Fatal(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"statue": http.StatusOK, "Order": rep.order, "Orm": rep.Orm})
+	c.JSON(http.StatusOK, gin.H{"statue": http.StatusOK, "Order": rep.Order, "Orm": rep.Orm})
 	return
 }
 
@@ -194,8 +195,9 @@ func (ctl *Controller) LisitOrderByUserIDAndStatus(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
-
-	orders, err := mysql.LisitOrderByUserId(req.Userid, req.Status)
+	ostore := ctl.Cnf.OrderDB + "." + ctl.Cnf.OrderTable
+	istore := ctl.Cnf.OrderDB + "." + ctl.Cnf.ItemTable
+	orders, err := mysql.LisitOrderByUserID(ctl.db, ostore, istore, req.Userid, req.Status)
 	if err != nil {
 		log.Fatal(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})

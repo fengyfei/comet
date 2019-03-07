@@ -165,13 +165,14 @@ func Insert(order Order, items []Item, db *sql.DB, closedInterval int, orderDB s
 	return order.ID, err
 }
 
-func OrderIDByOrderCode(db *sql.DB, query string, ordercode string) (uint32, error) {
+// OrderIDByOrderCode -
+func OrderIDByOrderCode(db *sql.DB, ostore string, ordercode string) (uint32, error) {
 	var (
 		orderid uint32
 		err     error
 	)
-
-	rows, err := db.Query(query, ordercode)
+	sql := fmt.Sprintf(categorySQLFormatStr[orderIdByOrderCode], ostore)
+	rows, err := db.Query(sql, ordercode)
 	if err != nil {
 		return 0, err
 	}
@@ -186,12 +187,13 @@ func OrderIDByOrderCode(db *sql.DB, query string, ordercode string) (uint32, err
 	return orderid, nil
 }
 
-func SelectByOrderKey(db *sql.DB, query, queryitem string, orderid uint32) (*OrmOrder, error) {
+func SelectByOrderKey(db *sql.DB, ostore, istore string, orderid uint32) (*OrmOrder, error) {
 	var (
 		oo OrmOrder
 		o  Order
 	)
-	rows, err := db.Query(query, orderid)
+	sql := fmt.Sprintf(categorySQLFormatStr[orderByOrderID], ostore)
+	rows, err := db.Query(sql, orderid)
 	if err != nil {
 		return nil, err
 	}
@@ -201,9 +203,9 @@ func SelectByOrderKey(db *sql.DB, query, queryitem string, orderid uint32) (*Orm
 			return nil, err
 		}
 	}
-
+	lisitItemByOrderIdsql := fmt.Sprintf(categorySQLFormatStr[itemsByOrderID], istore)
 	oo.Order = &o
-	oo.Orm, err = LisitItemByOrderId(db, queryitem, orderid)
+	oo.Orm, err = LisitItemByOrderId(db, lisitItemByOrderIdsql, orderid)
 	if err != nil {
 		return nil, err
 	}
@@ -245,10 +247,10 @@ func LisitItemByOrderId(db *sql.DB, query string, orderid uint32) ([]*Item, erro
 	return items, nil
 }
 
-func LisitOrderByUserId(db *sql.DB, query, queryitem string, userid uint64, mode uint8) ([]*OrmOrder, error) {
+func LisitOrderByUserID(db *sql.DB, ostore, istore string, userid uint64, mode uint8) ([]*OrmOrder, error) {
 	var OOs []*OrmOrder
-
-	rows, err := db.Query(query, userid, mode)
+	orderListByUserIDSql := fmt.Sprintf(categorySQLFormatStr[orderListByUserID], ostore)
+	rows, err := db.Query(orderListByUserIDSql, userid, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -261,9 +263,9 @@ func LisitOrderByUserId(db *sql.DB, query, queryitem string, userid uint64, mode
 		if err := rows.Scan(&o.ID, &o.OrderCode, &o.UserID, &o.ShipCode, &o.AddressID, &o.TotalPrice, &o.PayWay, &o.Promotion, &o.Freight, &o.Status, &o.Created, &o.Closed, &o.Updated); err != nil {
 			return nil, err
 		}
-
+		lisitItemByOrderIDSql := fmt.Sprintf(categorySQLFormatStr[itemsByOrderID], istore)
 		oo.Order = &o
-		oo.Orm, err = LisitItemByOrderId(db, queryitem, oo.ID)
+		oo.Orm, err = LisitItemByOrderId(db, lisitItemByOrderIDSql, oo.ID)
 		if err != nil {
 			return nil, err
 		}
