@@ -123,7 +123,7 @@ func (ctl *Controller) Insert(c *gin.Context) {
 		Created:    times,
 	}
 
-	rep.orderid, err = mysql.Insert(order, req.Items, ctl.db)
+	rep.orderid, err = mysql.Insert(order, req.Items, ctl.db, Config.ClosedInterval, Config.OrderDB, Config.OrderTable, Config.ItemTable)
 	if err != nil {
 		log.Fatal(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
