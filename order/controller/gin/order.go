@@ -11,21 +11,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Stocker interface {
-	ModifyProductStock(tx *sql.Tx, targetID uint32, num int) error
-}
+// type Stocker interface {
+// 	ModifyProductStock(tx *sql.Tx, targetID uint32, num int) error
+// }
 
-type UserChecker interface {
-	UserCheck(tx *sql.Tx, userid uint64, productID uint32) error
-}
+// type UserChecker interface {
+// 	UserCheck(tx *sql.Tx, userid uint64, productID uint32) error
+// }
 
 type Config struct {
 	OrderDB        string
 	OrderTable     string
 	ItemTable      string
 	ClosedInterval int
-	Stock          Stocker
-	User           UserChecker
+	// Stock          Stocker
+	// User           UserChecker
 }
 
 type Controller struct {
@@ -33,11 +33,16 @@ type Controller struct {
 	Cnf Config
 }
 
-func Register(r gin.IRouter, db *sql.DB, cnf Config) error {
+func Register(r gin.IRouter, db *sql.DB) error {
 	if r == nil {
 		log.Fatal("[InitRouter]: server is nil")
 	}
-
+	cnf := Config{
+		OrderDB:        "test",
+		OrderTable:     "order",
+		ItemTable:      "Items",
+		ClosedInterval: 5,
+	}
 	c := New(db, cnf)
 
 	if err := c.CreateOrderTable(); err != nil {
