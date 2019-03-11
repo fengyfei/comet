@@ -39,17 +39,24 @@ func Register(r gin.IRouter, db *sql.DB) error {
 	}
 	cnf := Config{
 		OrderDB:        "test",
-		OrderTable:     "order",
+		OrderTable:     "orderTable",
 		ItemTable:      "Items",
 		ClosedInterval: 5,
 	}
 	c := New(db, cnf)
 
+	if err := c.CreateDB(); err != nil {
+		log.Fatal(err)
+		return err
+	}
+
 	if err := c.CreateOrderTable(); err != nil {
+		log.Fatal(err)
 		return err
 	}
 
 	if err := c.CreateItemTable(); err != nil {
+		log.Fatal(err)
 		return err
 	}
 

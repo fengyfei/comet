@@ -53,7 +53,7 @@ const (
 
 var categorySQLFormatStr = []string{
 	`CREATE DATABASE IF NOT EXISTS %s`,
-	`CREATE TABLE IF NOT EXISTS %s.%s(
+	`CREATE TABLE IF NOT EXISTS %s(
 				id INT UNSIGNED NOT NULL AUTO_INCREMENT ,
 				orderCode VARCHAR(50) NOT NULL,
 				userID BIGINT UNSIGNED NOT NULL,
@@ -74,7 +74,7 @@ var categorySQLFormatStr = []string{
 				KEY status (status), 
 				KEY payWay (payWay)
 			)ENGINE=InnoDB AUTO_INCREMENT = 10000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='order info'`,
-	`CREATE TABLE IF NOT EXISTS %s.%s(
+	`CREATE TABLE IF NOT EXISTS %s(
 				productID INT UNSIGNED NOT NULL,
 				orderID VARCHAR(50) NOT NULL,
 				count INT UNSIGNED NOT NULL,
@@ -82,12 +82,12 @@ var categorySQLFormatStr = []string{
 				discount TINYINT UNSIGNED NOT NULL,
 				KEY orderID (orderID)
 			)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='orderitem info'`,
-	`INSERT INTO %s.%s (orderCode,userID,addressID,totalPrice,promotion,freight,closed) VALUES(?,?,?,?,?,?,?)`,
-	`INSERT INTO %s.%s (productID,orderID,count,price,discount) VALUES(?,?,?,?,?)`,
-	`SELECT id FROM %s.%s WHERE orderCode = ? LOCK IN SHARE MODE`,
-	`SELECT * FROM %s.%s WHERE id = ? LOCK IN SHARE MODE`,
-	`SELECT * FROM %s.%s WHERE orderID = ? LOCK IN SHARE MODE`,
-	`SELECT * FROM %s.%s WHERE userID = ? AND status = ? LOCK IN SHARE MODE`,
+	`INSERT INTO %s (orderCode,userID,addressID,totalPrice,promotion,freight,closed) VALUES(?,?,?,?,?,?,?)`,
+	`INSERT INTO %s (productID,orderID,count,price,discount) VALUES(?,?,?,?,?)`,
+	`SELECT id FROM %s WHERE orderCode = ? LOCK IN SHARE MODE`,
+	`SELECT * FROM %s WHERE id = ? LOCK IN SHARE MODE`,
+	`SELECT * FROM %s WHERE orderID = ? LOCK IN SHARE MODE`,
+	`SELECT * FROM %s WHERE userID = ? AND status = ? LOCK IN SHARE MODE`,
 	`UPDATE %s.%s SET payWay = ? , updated = ? , status = 2 WHERE id = ? LIMIT 1 `,
 	`UPDATE %s.%s SET shipCode = ? , updated = ? , status = 3 WHERE id = ? LIMIT 1 `,
 	`UPDATE %s.%s SET status = ? , updated = ? WHERE id = ? LIMIT 1 `,
@@ -101,8 +101,8 @@ func CreateDB(db *sql.DB, createDB string) error {
 }
 
 // CreateTable -
-func CreateTable(db *sql.DB, createTable string) error {
-	sql := fmt.Sprintf(categorySQLFormatStr[orderTable], createTable)
+func CreateTable(db *sql.DB, ostore string) error {
+	sql := fmt.Sprintf(categorySQLFormatStr[orderTable], ostore)
 	_, err := db.Exec(sql)
 	return err
 }
