@@ -1,18 +1,17 @@
-package admin
+package controller
 
 import (
 	"database/sql"
 	"log"
 	"net/http"
 
-	"github.com/fengyfei/comet/admin/model/mysql"
+	mysql "github.com/fengyfei/comet/admin/model/mysql"
 	"github.com/gin-gonic/gin"
 )
 
 // Controller -
 type Controller struct {
-	db             *sql.DB
-	OnLoginSucceed func(userID uint32) error
+	db *sql.DB
 }
 
 // New -
@@ -24,18 +23,22 @@ func New(db *sql.DB) *Controller {
 
 // RegisterRouter -
 func (c *Controller) RegisterRouter(r gin.IRouter) {
-	name := "admin"
+	if r == nil {
+		log.Fatal("[InitRouter]: server is nil")
+	}
+
+	name := "Admin"
 	password := "111111"
 	err := mysql.CreateTable(c.db, &name, &password)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	r.POST("/api/v1/admin/create", c.create)
-	r.POST("/api/v1/admin/login", c.login)
-	r.POST("/api/v1/admin/email", c.modifyEmail)
-	r.POST("/api/v1/admin/mobile", c.modifyMobile)
-	r.POST("/api/v1/admin/newpassword", c.modifyPassword)
+	r.POST("/create", c.create)
+	r.POST("/modify/email", c.modifyEmail)
+	r.POST("/modify/mobile", c.modifyMobile)
+	r.POST("/modify/password", c.modifyPassword)
+	r.POST("/modify/active", c.ModifyAdminActive)
 }
 
 func (c *Controller) create(ctx *gin.Context) {
@@ -47,49 +50,20 @@ func (c *Controller) create(ctx *gin.Context) {
 	err := ctx.ShouldBind(&admin)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
+		ctx.Error(err)
 		return
 	}
 
-	// Default password
+	//Default password
 	if admin.Password == "" {
 		admin.Password = "111111"
 	}
 
 	err = mysql.Create(c.db, &admin.Name, &admin.Password)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
-}
-
-func (c *Controller) login(ctx *gin.Context) {
-	var (
-		admin struct {
-			Name     string `json:"name"      binding:"required,alphanum,min=5,max=30"`
-			Password string `json:"password"  binding:"printascii,min=6,max=30"`
-		}
-	)
-
-	err := ctx.ShouldBind(&admin)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
-		return
-	}
-
-	ID, err := mysql.Login(c.db, &admin.Name, &admin.Password)
-	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
+		ctx.Error(err)
 		return
-	}
-
-	if c.OnLoginSucceed != nil {
-		err = c.OnLoginSucceed(ID)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError})
-			return
-		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
@@ -98,20 +72,22 @@ func (c *Controller) login(ctx *gin.Context) {
 func (c *Controller) modifyEmail(ctx *gin.Context) {
 	var (
 		admin struct {
-			ID    uint32 `json:"id"    binding:"required"`
-			Email string `json:"email" binding:"required,email"`
+			AdminID uint32 `json:"admin_id"    binding:"required"`
+			Email   string `json:"email"       binding:"required,email"`
 		}
 	)
 
 	err := ctx.ShouldBind(&admin)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
+		ctx.Error(err)
 		return
 	}
 
-	err = mysql.ModifyEmail(c.db, admin.ID, &admin.Email)
+	err = mysql.ModifyEmail(c.db, admin.AdminID, &admin.Email)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError})
+		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
+		ctx.Error(err)
 		return
 	}
 
@@ -121,20 +97,22 @@ func (c *Controller) modifyEmail(ctx *gin.Context) {
 func (c *Controller) modifyMobile(ctx *gin.Context) {
 	var (
 		admin struct {
-			ID     uint32 `json:"id"     binding:"required"`
-			Mobile string `json:"mobile" binding:"required,numeric,len=11"`
+			AdminID uint32 `json:"admin_id"     binding:"required"`
+			Mobile  string `json:"mobile"       binding:"required,numeric,len=11"`
 		}
 	)
 
 	err := ctx.ShouldBind(&admin)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
+		ctx.Error(err)
 		return
 	}
 
-	err = mysql.ModifyMobile(c.db, admin.ID, &admin.Mobile)
+	err = mysql.ModifyMobile(c.db, admin.AdminID, &admin.Mobile)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError})
+		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
+		ctx.Error(err)
 		return
 	}
 
@@ -144,7 +122,7 @@ func (c *Controller) modifyMobile(ctx *gin.Context) {
 func (c *Controller) modifyPassword(ctx *gin.Context) {
 	var (
 		admin struct {
-			ID          uint32 `json:"id"            binding:"required"`
+			AdminID     uint32 `json:"admin_id"      binding:"required"`
 			Password    string `json:"password"      binding:"printascii,min=6,max=30"`
 			NewPassword string `json:"newpassword"   binding:"printascii,min=6,max=30"`
 			Confirm     string `json:"confirm"       binding:"printascii,min=6,max=30"`
@@ -154,24 +132,76 @@ func (c *Controller) modifyPassword(ctx *gin.Context) {
 	err := ctx.ShouldBind(&admin)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
+		ctx.Error(err)
 		return
 	}
 
 	if admin.NewPassword == admin.Password {
 		ctx.JSON(http.StatusNotAcceptable, gin.H{"status": http.StatusNotAcceptable})
+		ctx.Error(err)
 		return
 	}
 
 	if admin.NewPassword != admin.Confirm {
 		ctx.JSON(http.StatusConflict, gin.H{"status": http.StatusConflict})
+		ctx.Error(err)
 		return
 	}
 
-	err = mysql.ModifyPassword(c.db, admin.ID, &admin.Password, &admin.NewPassword)
+	err = mysql.ModifyPassword(c.db, admin.AdminID, &admin.Password, &admin.NewPassword)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError})
+		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
+		ctx.Error(err)
 		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
+}
+
+//ModifyAdminActive -
+func (c *Controller) ModifyAdminActive(ctx *gin.Context) {
+	var (
+		admin struct {
+			CheckID     uint32 `json:"check_id"    binding:"required"`
+			CheckActive bool   `json:"check_active"`
+		}
+	)
+
+	err := ctx.ShouldBind(&admin)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
+		ctx.Error(err)
+		return
+	}
+
+	err = mysql.ModifyAdminActive(c.db, admin.CheckID, admin.CheckActive)
+	if err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
+}
+
+//Login -
+func (c *Controller) Login(ctx *gin.Context) (uint32, error) {
+	var (
+		admin struct {
+			Name     string `json:"name"      binding:"required,alphanum,min=5,max=30"`
+			Password string `json:"password"  binding:"printascii,min=6,max=30"`
+		}
+	)
+
+	err := ctx.ShouldBind(&admin)
+	if err != nil {
+		return 0, err
+	}
+
+	ID, err := mysql.Login(c.db, &admin.Name, &admin.Password)
+	if err != nil {
+		return 0, err
+	}
+
+	return ID, nil
 }

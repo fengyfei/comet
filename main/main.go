@@ -2,12 +2,19 @@ package main
 
 import (
 	"database/sql"
+	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-
+	jwt "github.com/appleboy/gin-jwt"
 	admin "github.com/fengyfei/comet/admin/controller/gin"
 	category "github.com/fengyfei/comet/category/controller/gin"
+	permission "github.com/fengyfei/comet/permission/controller/gin"
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
+)
+
+var (
+	// JWTMiddleware should be exported for user authentication.
+	JWTMiddleware *jwt.GinJWTMiddleware
 )
 
 func main() {
@@ -18,8 +25,27 @@ func main() {
 		panic(err)
 	}
 
-	c := admin.New(dbConn)
-	c.RegisterRouter(router)
+	a := admin.New(dbConn)
+
+	JWTMiddleware = &jwt.GinJWTMiddleware{
+		Realm:   "Template",
+		Key:     []byte("hydra"),
+		Timeout: 24 * time.Hour,
+	}
+	getUID := a.ExtendJWTMiddleWare(JWTMiddleware)
+
+	router.POST("/api/v1/admin/login", JWTMiddleware.LoginHandler)
+
+	router.Use(func(c *gin.Context) {
+		JWTMiddleware.MiddlewareFunc()(c)
+	})
+	router.Use(admin.CheckActive(a, getUID))
+
+	p := permission.New(dbConn)
+	router.Use(permission.CheckPermission(p, getUID))
+
+	a.RegisterRouter(router.Group("/api/v1/admin"))
+	p.RegisterRouter(router.Group("/api/v1/permission"))
 
 	category.Register(dbConn, "students", "test", router)
 

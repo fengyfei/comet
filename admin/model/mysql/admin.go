@@ -15,6 +15,8 @@ const (
 	mysqlUserModifyMobile
 	mysqlUserGetPassword
 	mysqlUserModifyPassword
+	mysqlUserModifyActive
+	mysqlUserGetIsActive
 )
 
 var (
@@ -23,21 +25,23 @@ var (
 
 	adminSQLString = []string{
 		`CREATE TABLE IF NOT EXISTS admin (
-		id       	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-		name     	VARCHAR(512) UNIQUE NOT NULL DEFAULT ' ',
-		password 	VARCHAR(512) NOT NULL DEFAULT ' ',
-		mobile   	VARCHAR(32) UNIQUE DEFAULT NULL,
-		email    	VARCHAR(128) UNIQUE DEFAULT NULL,
-		active   	BOOLEAN DEFAULT TRUE,
-		created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		PRIMARY KEY (id)
+			admin_id    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			name     	VARCHAR(512) UNIQUE NOT NULL DEFAULT ' ',
+			password 	VARCHAR(512) NOT NULL DEFAULT ' ',
+			mobile   	VARCHAR(32) UNIQUE DEFAULT NULL,
+			email    	VARCHAR(128) UNIQUE DEFAULT NULL,
+			active   	BOOLEAN DEFAULT TRUE,
+			created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (admin_id)
 		) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;`,
 		`INSERT INTO admin (name,password,active)  VALUES (?,?,?)`,
-		`SELECT id,password FROM admin WHERE name = ? LOCK IN SHARE MODE`,
-		`UPDATE admin SET email=? WHERE id = ? LIMIT 1`,
-		`UPDATE admin SET mobile=? WHERE id = ? LIMIT 1`,
-		`SELECT password FROM admin WHERE id = ?  LOCK IN SHARE MODE`,
-		`UPDATE admin SET password = ? WHERE id = ? LIMIT 1`,
+		`SELECT admin_id,password FROM admin WHERE name = ? LOCK IN SHARE MODE`,
+		`UPDATE admin SET email=? WHERE admin_id = ? LIMIT 1`,
+		`UPDATE admin SET mobile=? WHERE admin_id = ? LIMIT 1`,
+		`SELECT password FROM admin WHERE admin_id = ?  LOCK IN SHARE MODE`,
+		`UPDATE admin SET password = ? WHERE admin_id = ? LIMIT 1`,
+		`UPDATE admin SET active = ? WHERE admin_id = ? LIMIT 1`,
+		`SELECT active FROM admin WHERE admin_id = ? LOCK IN SHARE MODE`,
 	}
 )
 
@@ -143,4 +147,28 @@ func ModifyPassword(db *sql.DB, id uint32, password, newPassword *string) error 
 	_, err = db.Exec(adminSQLString[mysqlUserModifyPassword], hash, id)
 
 	return err
+}
+
+//ModifyAdminActive -
+func ModifyAdminActive(db *sql.DB, id uint32, active bool) error {
+	result, err := db.Exec(adminSQLString[mysqlUserModifyActive], active, id)
+	if err != nil {
+		return err
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return errInvalidMysql
+	}
+
+	return nil
+
+}
+
+//IsActive return user.Active and nil if query success.
+func IsActive(db *sql.DB, id uint32) (bool, error) {
+	var (
+		isActive bool
+	)
+
+	db.QueryRow(adminSQLString[mysqlUserGetIsActive], id).Scan(&isActive)
+	return isActive, nil
 }
