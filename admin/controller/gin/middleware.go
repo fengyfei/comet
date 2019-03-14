@@ -70,6 +70,10 @@ func (c *Controller) ExtendJWTMiddleWare(JWTMiddleware *ginjwt.GinJWTMiddleware)
 func CheckActive(c *Controller, getUID func(ctx *gin.Context) (uint32, error)) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
 		a, err := getUID(ctx)
+		if err != nil {
+			ctx.AbortWithError(http.StatusBadGateway, err)
+			return
+		}
 
 		active, err := mysql.IsActive(c.db, a)
 		if err != nil {
@@ -78,7 +82,7 @@ func CheckActive(c *Controller, getUID func(ctx *gin.Context) (uint32, error)) f
 		}
 
 		if !active {
-			ctx.AbortWithError(http.StatusBadGateway, errActive)
+			ctx.AbortWithError(http.StatusServiceUnavailable, errActive)
 			return
 		}
 	}

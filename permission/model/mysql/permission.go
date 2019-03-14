@@ -250,6 +250,7 @@ func URLPermissions(db *sql.DB, url *string) (map[uint32]bool, error) {
 		}
 		result[roleID] = true
 	}
+
 	return result, nil
 }
 
@@ -280,6 +281,7 @@ func Permissions(db *sql.DB) (*[]*Permission, error) {
 		}
 		result = append(result, data)
 	}
+
 	return &result, nil
 }
 
@@ -349,6 +351,7 @@ func AdminGetRoleMap(db *sql.DB, aid uint32) (map[uint32]bool, error) {
 		}
 		result[roleID] = true
 	}
+
 	return result, nil
 }
 
@@ -385,6 +388,7 @@ func AssociatedRoleList(db *sql.DB, aid uint32) ([]*RelationData, error) {
 		}
 		result = append(result, r)
 	}
+
 	return result, nil
 
 }
@@ -405,10 +409,12 @@ func GetAdminIDMap(db *sql.DB) (map[uint32]bool, error) {
 		AdminID uint32
 		result  = make(map[uint32]bool)
 	)
+
 	slice1, err := RoleList(db)
 	if err != nil {
 		return nil, err
 	}
+
 	for _, aid := range slice1 {
 		rows, err := db.Query(relationSQLString[mysqlRelationSelectAdmin], aid.RoleID)
 		if err != nil {
@@ -423,6 +429,7 @@ func GetAdminIDMap(db *sql.DB) (map[uint32]bool, error) {
 			result[AdminID] = true
 		}
 	}
+
 	return result, nil
 }
 

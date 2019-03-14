@@ -155,7 +155,7 @@ func (c *Controller) getRoleByID(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "Role": result})
+	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "RoleByID": result})
 }
 
 func (c *Controller) addURLPermission(ctx *gin.Context) {
@@ -314,7 +314,7 @@ func (c *Controller) adminGetRoleMap(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "URLPermissions": result})
+	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "RoleMap": result})
 }
 
 func (c *Controller) getAdminIDMap(ctx *gin.Context) {
@@ -325,7 +325,7 @@ func (c *Controller) getAdminIDMap(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "AdminRelation": result})
+	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "AdminIDMap": result})
 }
 
 func (c *Controller) getRoleIDMap(ctx *gin.Context) {
@@ -336,5 +336,5 @@ func (c *Controller) getRoleIDMap(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "RoleRelation": result})
+	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "RoleIDMap": result})
 }

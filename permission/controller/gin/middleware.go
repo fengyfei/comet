@@ -10,8 +10,6 @@ import (
 
 var (
 	errPermission = errors.New("Admin permission is wrong")
-	errID         = errors.New("Admin ID is wrong")
-	errGet        = errors.New("Get Admin ID is wrong")
 )
 
 //CheckPermission -
@@ -19,7 +17,12 @@ func CheckPermission(c *Controller, getUID func(ctx *gin.Context) (uint32, error
 	return func(ctx *gin.Context) {
 		var check = false
 		URLL := ctx.Request.URL.Path
+
 		a, err := getUID(ctx)
+		if err != nil {
+			ctx.AbortWithError(http.StatusBadGateway, err)
+			return
+		}
 
 		adRole, err := permission.AdminGetRoleMap(c.db, a)
 		if err != nil {
@@ -29,7 +32,7 @@ func CheckPermission(c *Controller, getUID func(ctx *gin.Context) (uint32, error
 
 		urlRole, err := permission.URLPermissions(c.db, &URLL)
 		if err != nil {
-			ctx.AbortWithError(http.StatusBadGateway, err)
+			ctx.AbortWithError(http.StatusFailedDependency, err)
 			return
 		}
 
