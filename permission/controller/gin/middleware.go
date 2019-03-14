@@ -9,6 +9,8 @@ import (
 )
 
 var (
+	//FirstURL -
+	FirstURL      = "/api/v1/permission/addurl"
 	errPermission = errors.New("Admin permission is wrong")
 )
 
@@ -42,7 +44,13 @@ func CheckPermission(c *Controller, getUID func(ctx *gin.Context) (uint32, error
 			return
 		}
 
-		if len(lenthrole) != 0 {
+		urlroleid, err := permission.URLPermissions(c.db, &FirstURL)
+		if err != nil {
+			ctx.AbortWithError(http.StatusVariantAlsoNegotiates, err)
+			return
+		}
+
+		if len(lenthrole) != 0 && len(urlroleid) != 0 {
 			for urlkey := range urlRole {
 				for adkey := range adRole {
 					if urlkey == adkey {
