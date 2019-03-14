@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -52,7 +53,7 @@ const (
 
 var categorySQLFormatStr = []string{
 	`CREATE DATABASE IF NOT EXISTS %s`,
-	`CREATE TABLE IF NOT EXISTS %s.%s(
+	`CREATE TABLE IF NOT EXISTS %s(
 				id INT UNSIGNED NOT NULL AUTO_INCREMENT ,
 				orderCode VARCHAR(50) NOT NULL,
 				userID BIGINT UNSIGNED NOT NULL,
@@ -73,7 +74,7 @@ var categorySQLFormatStr = []string{
 				KEY status (status), 
 				KEY payWay (payWay)
 			)ENGINE=InnoDB AUTO_INCREMENT = 10000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='order info'`,
-	`CREATE TABLE IF NOT EXISTS %s.%s(
+	`CREATE TABLE IF NOT EXISTS %s(
 				productID INT UNSIGNED NOT NULL,
 				orderID VARCHAR(50) NOT NULL,
 				count INT UNSIGNED NOT NULL,
@@ -81,28 +82,33 @@ var categorySQLFormatStr = []string{
 				discount TINYINT UNSIGNED NOT NULL,
 				KEY orderID (orderID)
 			)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='orderitem info'`,
-	`INSERT INTO %s.%s (orderCode,userID,addressID,totalPrice,promotion,freight,closed) VALUES(?,?,?,?,?,?,?)`,
-	`INSERT INTO %s.%s (productID,orderID,count,price,discount) VALUES(?,?,?,?,?)`,
-	`SELECT id FROM %s.%s WHERE orderCode = ? LOCK IN SHARE MODE`,
-	`SELECT * FROM %s.%s WHERE id = ? LOCK IN SHARE MODE`,
-	`SELECT * FROM %s.%s WHERE orderID = ? LOCK IN SHARE MODE`,
-	`SELECT * FROM %s.%s WHERE userID = ? AND status = ? LOCK IN SHARE MODE`,
+	`INSERT INTO %s (orderCode,userID,addressID,totalPrice,promotion,freight,closed) VALUES(?,?,?,?,?,?,?)`,
+	`INSERT INTO %s (productID,orderID,count,price,discount) VALUES(?,?,?,?,?)`,
+	`SELECT id FROM %s WHERE orderCode = ? LOCK IN SHARE MODE`,
+	`SELECT * FROM %s WHERE id = ? LOCK IN SHARE MODE`,
+	`SELECT * FROM %s WHERE orderID = ? LOCK IN SHARE MODE`,
+	`SELECT * FROM %s WHERE userID = ? AND status = ? LOCK IN SHARE MODE`,
 	`UPDATE %s.%s SET payWay = ? , updated = ? , status = 2 WHERE id = ? LIMIT 1 `,
 	`UPDATE %s.%s SET shipCode = ? , updated = ? , status = 3 WHERE id = ? LIMIT 1 `,
 	`UPDATE %s.%s SET status = ? , updated = ? WHERE id = ? LIMIT 1 `,
 }
 
+// CreateDB -
 func CreateDB(db *sql.DB, createDB string) error {
-	_, err := db.Exec(createDB)
+	sql := fmt.Sprintf(categorySQLFormatStr[orderDB], createDB)
+	_, err := db.Exec(sql)
 	return err
 }
 
-func CreateTable(db *sql.DB, createTable string) error {
-	_, err := db.Exec(createTable)
+// CreateTable -
+func CreateTable(db *sql.DB, ostore string) error {
+	sql := fmt.Sprintf(categorySQLFormatStr[orderTable], ostore)
+	_, err := db.Exec(sql)
 	return err
 }
 
-func Insert(order Order, items []Item, db *sql.DB, cnf ) (id uint32, err error) {
+// Insert -
+func Insert(order Order, items []Item, db *sql.DB, closedInterval int, orderDB string, orderTable string, itemTable string) (id uint32, err error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return 0, err
@@ -116,9 +122,10 @@ func Insert(order Order, items []Item, db *sql.DB, cnf ) (id uint32, err error) 
 		}
 	}()
 
-	order.Closed = order.Created.Add(time.Duration(os.Cnf.ClosedInterval * int(time.Hour)))
-
-	result, err := tx.Exec(os.SQLS[orderInsert], order.OrderCode, order.UserID, order.AddressID, order.TotalPrice, order.Promotion, order.Freight, order.Closed)
+	order.Closed = order.Created.Add(time.Duration(closedInterval * int(time.Hour)))
+	ostore := orderDB + "." + orderTable
+	ostoresql := fmt.Sprintf(categorySQLFormatStr[orderInsert], ostore)
+	result, err := tx.Exec(ostoresql, order.OrderCode, order.UserID, order.AddressID, order.TotalPrice, order.Promotion, order.Freight, order.Closed)
 
 	if err != nil {
 		return 0, err
@@ -128,14 +135,15 @@ func Insert(order Order, items []Item, db *sql.DB, cnf ) (id uint32, err error) 
 		return 0, errors.New("[insert order] : insert order affected 0 rows")
 	}
 
-	Id, err := result.LastInsertId()
+	ID, err := result.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
-	order.ID = uint32(Id)
-
+	order.ID = uint32(ID)
+	istore := orderDB + "." + itemTable
+	istoresql := fmt.Sprintf(categorySQLFormatStr[itemInsert], istore)
 	for _, x := range items {
-		result, err := tx.Exec(os.SQLS[itemInsert], x.ProductId, order.ID, x.Count, x.Price, x.Discount)
+		result, err := tx.Exec(istoresql, x.ProductId, order.ID, x.Count, x.Price, x.Discount)
 		if err != nil {
 			return 0, err
 		}
@@ -143,27 +151,28 @@ func Insert(order Order, items []Item, db *sql.DB, cnf ) (id uint32, err error) 
 			return 0, errors.New("insert item: insert affected 0 rows")
 		}
 
-		err = os.Cnf.User.UserCheck(tx, order.UserID, x.ProductId)
-		if err != nil {
-			return 0, err
-		}
+		// err = os.Cnf.User.UserCheck(tx, order.UserID, x.ProductId)
+		// if err != nil {
+		// 	return 0, err
+		// }
 
-		err = os.Cnf.Stock.ModifyProductStock(tx, x.ProductId, int(x.Count))
-		if err != nil {
-			return 0, err
-		}
+		// err = os.Cnf.Stock.ModifyProductStock(tx, x.ProductId, int(x.Count))
+		// if err != nil {
+		// 	return 0, err
+		// }
 	}
 
 	return order.ID, err
 }
 
-func OrderIDByOrderCode(db *sql.DB, query string, ordercode string) (uint32, error) {
+// OrderIDByOrderCode -
+func OrderIDByOrderCode(db *sql.DB, ostore string, ordercode string) (uint32, error) {
 	var (
 		orderid uint32
 		err     error
 	)
-
-	rows, err := db.Query(query, ordercode)
+	sql := fmt.Sprintf(categorySQLFormatStr[orderIdByOrderCode], ostore)
+	rows, err := db.Query(sql, ordercode)
 	if err != nil {
 		return 0, err
 	}
@@ -178,12 +187,13 @@ func OrderIDByOrderCode(db *sql.DB, query string, ordercode string) (uint32, err
 	return orderid, nil
 }
 
-func SelectByOrderKey(db *sql.DB, query, queryitem string, orderid uint32) (*OrmOrder, error) {
+func SelectByOrderKey(db *sql.DB, ostore, istore string, orderid uint32) (*OrmOrder, error) {
 	var (
 		oo OrmOrder
 		o  Order
 	)
-	rows, err := db.Query(query, orderid)
+	sql := fmt.Sprintf(categorySQLFormatStr[orderByOrderID], ostore)
+	rows, err := db.Query(sql, orderid)
 	if err != nil {
 		return nil, err
 	}
@@ -193,9 +203,9 @@ func SelectByOrderKey(db *sql.DB, query, queryitem string, orderid uint32) (*Orm
 			return nil, err
 		}
 	}
-
+	lisitItemByOrderIdsql := fmt.Sprintf(categorySQLFormatStr[itemsByOrderID], istore)
 	oo.Order = &o
-	oo.Orm, err = LisitItemByOrderId(db, queryitem, orderid)
+	oo.Orm, err = LisitItemByOrderId(db, lisitItemByOrderIdsql, orderid)
 	if err != nil {
 		return nil, err
 	}
@@ -237,10 +247,10 @@ func LisitItemByOrderId(db *sql.DB, query string, orderid uint32) ([]*Item, erro
 	return items, nil
 }
 
-func LisitOrderByUserId(db *sql.DB, query, queryitem string, userid uint64, mode uint8) ([]*OrmOrder, error) {
+func LisitOrderByUserID(db *sql.DB, ostore, istore string, userid uint64, mode uint8) ([]*OrmOrder, error) {
 	var OOs []*OrmOrder
-
-	rows, err := db.Query(query, userid, mode)
+	orderListByUserIDSql := fmt.Sprintf(categorySQLFormatStr[orderListByUserID], ostore)
+	rows, err := db.Query(orderListByUserIDSql, userid, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -253,9 +263,9 @@ func LisitOrderByUserId(db *sql.DB, query, queryitem string, userid uint64, mode
 		if err := rows.Scan(&o.ID, &o.OrderCode, &o.UserID, &o.ShipCode, &o.AddressID, &o.TotalPrice, &o.PayWay, &o.Promotion, &o.Freight, &o.Status, &o.Created, &o.Closed, &o.Updated); err != nil {
 			return nil, err
 		}
-
+		lisitItemByOrderIDSql := fmt.Sprintf(categorySQLFormatStr[itemsByOrderID], istore)
 		oo.Order = &o
-		oo.Orm, err = LisitItemByOrderId(db, queryitem, oo.ID)
+		oo.Orm, err = LisitItemByOrderId(db, lisitItemByOrderIDSql, oo.ID)
 		if err != nil {
 			return nil, err
 		}

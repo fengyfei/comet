@@ -66,14 +66,14 @@ func (con *Controller) Insert(c *gin.Context) {
 	)
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Fatal(err)
+		c.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
 
 	_, err := mysql.InsertCategory(con.db, con.tableName, req.ParentID, req.Name)
 	if err != nil {
-		log.Fatal(err)
+		c.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
@@ -91,14 +91,14 @@ func (con *Controller) ChangeCategoryStatus(c *gin.Context) {
 	)
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Fatal(err)
+		c.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
 
 	err := mysql.ChangeCategoryStatus(con.db, con.tableName, req.CategoryID, req.Status)
 	if err != nil {
-		log.Fatal(err)
+		c.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
@@ -116,14 +116,14 @@ func (con *Controller) ChangeCategoryName(c *gin.Context) {
 	)
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Fatal(err)
+		c.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
 
 	err := mysql.ChangeCategoryName(con.db, con.tableName, req.CategoryID, req.Name)
 	if err != nil {
-		log.Fatal(err)
+		c.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
@@ -140,14 +140,14 @@ func (con *Controller) LisitChirldrenByParentID(c *gin.Context) {
 	)
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Fatal(err)
+		c.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}
 
 	list, err := mysql.LisitChirldrenByParentId(con.db, con.tableName, req.ParentID)
 	if err != nil {
-		log.Fatal(err)
+		c.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
 		return
 	}

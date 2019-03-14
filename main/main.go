@@ -7,6 +7,7 @@ import (
 	jwt "github.com/appleboy/gin-jwt"
 	admin "github.com/fengyfei/comet/admin/controller/gin"
 	category "github.com/fengyfei/comet/category/controller/gin"
+	order "github.com/fengyfei/comet/order/controller/gin"
 	permission "github.com/fengyfei/comet/permission/controller/gin"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
@@ -48,6 +49,8 @@ func main() {
 	p.RegisterRouter(router.Group("/api/v1/permission"))
 
 	category.Register(dbConn, "students", "test", router)
+
+	order.Register(router, dbConn)
 
 	router.Run(":8000")
 }
