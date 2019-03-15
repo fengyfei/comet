@@ -1,3 +1,8 @@
+/*
+ * Revision History:
+ *     Initial: 2019/03/14        Yang ChengKai
+ */
+
 package controller
 
 import (
@@ -37,7 +42,7 @@ func (c *Controller) RegisterRouter(r gin.IRouter) {
 	r.POST("/addurl", c.addURLPermission)
 	r.POST("/removeurl", c.removeURLPermission)
 	r.POST("/urlgetrole", c.urlPermissions)
-	r.POST("/getpermission", c.permissions)
+	r.POST("/geturl", c.permissions)
 
 	r.POST("/addrelation", c.addRelation)
 	r.POST("/removerelation", c.removeRelation)

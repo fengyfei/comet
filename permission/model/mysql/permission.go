@@ -1,3 +1,8 @@
+/*
+ * Revision History:
+ *     Initial: 2019/03/14        Yang ChengKai
+ */
+
 package mysql
 
 import (
@@ -124,7 +129,7 @@ func CreateTable(db *sql.DB) error {
 		return err
 	}
 
-	return err
+	return nil
 }
 
 // CreateRole create a new role information.
@@ -362,6 +367,7 @@ func AssociatedRoleList(db *sql.DB, aid uint32) ([]*RelationData, error) {
 		r      *RelationData
 		result []*RelationData
 	)
+
 	adminIsActive, err := mysql.IsActive(db, aid)
 	if err != nil {
 		return nil, err
@@ -390,7 +396,6 @@ func AssociatedRoleList(db *sql.DB, aid uint32) ([]*RelationData, error) {
 	}
 
 	return result, nil
-
 }
 
 //IsActive return Active and nil if query success.

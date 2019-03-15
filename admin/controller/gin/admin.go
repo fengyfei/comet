@@ -1,3 +1,8 @@
+/*
+ * Revision History:
+ *     Initial: 2019/03/14        Yang ChengKai
+ */
+
 package controller
 
 import (
@@ -49,8 +54,8 @@ func (c *Controller) create(ctx *gin.Context) {
 
 	err := ctx.ShouldBind(&admin)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		ctx.Error(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		return
 	}
 
@@ -61,8 +66,8 @@ func (c *Controller) create(ctx *gin.Context) {
 
 	err = mysql.Create(c.db, &admin.Name, &admin.Password)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		ctx.Error(err)
+		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		return
 	}
 
@@ -79,15 +84,15 @@ func (c *Controller) modifyEmail(ctx *gin.Context) {
 
 	err := ctx.ShouldBind(&admin)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		ctx.Error(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		return
 	}
 
 	err = mysql.ModifyEmail(c.db, admin.AdminID, &admin.Email)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		ctx.Error(err)
+		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		return
 	}
 
@@ -104,15 +109,15 @@ func (c *Controller) modifyMobile(ctx *gin.Context) {
 
 	err := ctx.ShouldBind(&admin)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		ctx.Error(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		return
 	}
 
 	err = mysql.ModifyMobile(c.db, admin.AdminID, &admin.Mobile)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		ctx.Error(err)
+		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		return
 	}
 
@@ -131,27 +136,27 @@ func (c *Controller) modifyPassword(ctx *gin.Context) {
 
 	err := ctx.ShouldBind(&admin)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		ctx.Error(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		return
 	}
 
 	if admin.NewPassword == admin.Password {
-		ctx.JSON(http.StatusNotAcceptable, gin.H{"status": http.StatusNotAcceptable})
 		ctx.Error(err)
+		ctx.JSON(http.StatusNotAcceptable, gin.H{"status": http.StatusNotAcceptable})
 		return
 	}
 
 	if admin.NewPassword != admin.Confirm {
-		ctx.JSON(http.StatusConflict, gin.H{"status": http.StatusConflict})
 		ctx.Error(err)
+		ctx.JSON(http.StatusConflict, gin.H{"status": http.StatusConflict})
 		return
 	}
 
 	err = mysql.ModifyPassword(c.db, admin.AdminID, &admin.Password, &admin.NewPassword)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		ctx.Error(err)
+		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		return
 	}
 
@@ -169,15 +174,15 @@ func (c *Controller) ModifyAdminActive(ctx *gin.Context) {
 
 	err := ctx.ShouldBind(&admin)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		ctx.Error(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		return
 	}
 
 	err = mysql.ModifyAdminActive(c.db, admin.CheckID, admin.CheckActive)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		ctx.Error(err)
+		ctx.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		return
 	}
 
