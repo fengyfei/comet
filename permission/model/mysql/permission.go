@@ -344,6 +344,15 @@ func AdminGetRoleMap(db *sql.DB, aid uint32) (map[uint32]bool, error) {
 		result = make(map[uint32]bool)
 	)
 
+	adminIsActive, err := mysql.IsActive(db, aid)
+	if err != nil {
+		return nil, err
+	}
+
+	if !adminIsActive {
+		return nil, errAdminInactive
+	}
+
 	rows, err := db.Query(relationSQLString[mysqlRelationRoleMap], aid)
 	if err != nil {
 		return nil, err
