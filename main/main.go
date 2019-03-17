@@ -9,6 +9,7 @@ import (
 	category "github.com/fengyfei/comet/category/controller/gin"
 	order "github.com/fengyfei/comet/order/controller/gin"
 	permission "github.com/fengyfei/comet/permission/controller/gin"
+	upload "github.com/fengyfei/comet/upload/controller/gin"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -45,8 +46,11 @@ func main() {
 	p := permission.New(dbConn)
 	router.Use(permission.CheckPermission(p, getUID))
 
+	u := upload.New(dbConn, "http://0.0.0.1:9573", getUID)
+
 	a.RegisterRouter(router.Group("/api/v1/admin"))
 	p.RegisterRouter(router.Group("/api/v1/permission"))
+	u.RegisterRouter(router.Group("/api/v1/user"))
 
 	category.Register(dbConn, "students", "test", router)
 

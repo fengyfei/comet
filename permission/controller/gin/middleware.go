@@ -33,7 +33,7 @@ func CheckPermission(c *Controller, getUID func(ctx *gin.Context) (uint32, error
 
 		adRole, err := permission.AdminGetRoleMap(c.db, a)
 		if err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			ctx.AbortWithError(http.StatusConflict, err)
 			return
 		}
 
