@@ -1,3 +1,8 @@
+/*
+ * Revision History:
+ *     Initial: 2019/03/18        Yang ChengKai
+ */
+
 package mysql
 
 import (
@@ -16,7 +21,7 @@ type Banner struct {
 	BannerID  int
 	Name      string
 	ImagePath string
-	Event     string
+	EventPath string
 	StartDate string
 	EndDate   string
 }
@@ -35,12 +40,12 @@ var (
 			bannerId    INT NOT NULL AUTO_INCREMENT,
 			name        VARCHAR(512) UNIQUE DEFAULT NULL,
 			imagePath   VARCHAR(512) DEFAULT NULL,
-			event       VARCHAR(512) DEFAULT NULL,
+			eventPath       VARCHAR(512) DEFAULT NULL,
 			startDate   DATETIME NOT NULL,
 			endDate     DATETIME NOT NULL,
 			PRIMARY KEY (bannerId)
 		)ENGINE=InnoDB AUTO_INCREMENT=1000000 DEFAULT CHARSET=utf8mb4`,
-		`INSERT INTO  %s (name,imagePath,event,startDate,endDate) VALUES (?,?,?,?,?)`,
+		`INSERT INTO  %s (name,imagePath,eventPath,startDate,endDate) VALUES (?,?,?,?,?)`,
 		`SELECT * FROM %s WHERE unix_timestamp(startDate) <= ? AND unix_timestamp(endDate) >= ? LOCK IN SHARE MODE`,
 		`SELECT * FROM %s WHERE bannerid = ? LIMIT 1 LOCK IN SHARE MODE`,
 		`DELETE FROM %s WHERE bannerid = ? LIMIT 1`,
@@ -55,9 +60,9 @@ func CreateTable(db *sql.DB, tableName string) error {
 }
 
 // InsertBanner return  id
-func InsertBanner(db *sql.DB, tableName string, name string, imagepath string, event string, startDate time.Time, endDate time.Time) (int, error) {
+func InsertBanner(db *sql.DB, tableName string, name string, imagePath string, eventPath string, startDate time.Time, endDate time.Time) (int, error) {
 	sql := fmt.Sprintf(bannerSQLString[mysqlBannerInsert], tableName)
-	result, err := db.Exec(sql, name, imagepath, event, startDate, endDate)
+	result, err := db.Exec(sql, name, imagePath, eventPath, startDate, endDate)
 	if err != nil {
 		return 0, err
 	}
@@ -81,8 +86,8 @@ func LisitValidBannerByUnixDate(db *sql.DB, tableName string, unixtime int64) ([
 
 		bannerID  int
 		name      string
-		imagepath string
-		eventpath string
+		imagePath string
+		eventPath string
 		startDate string
 		endDate   string
 	)
@@ -95,15 +100,15 @@ func LisitValidBannerByUnixDate(db *sql.DB, tableName string, unixtime int64) ([
 	defer rows.Close()
 
 	for rows.Next() {
-		if err := rows.Scan(&bannerID, &name, &imagepath, &eventpath, &startDate, &endDate); err != nil {
+		if err := rows.Scan(&bannerID, &name, &imagePath, &eventPath, &startDate, &endDate); err != nil {
 			return nil, err
 		}
 
 		ban := &Banner{
 			BannerID:  bannerID,
 			Name:      name,
-			ImagePath: imagepath,
-			Event:     eventpath,
+			ImagePath: imagePath,
+			EventPath: eventPath,
 			StartDate: startDate,
 			EndDate:   endDate,
 		}
@@ -126,7 +131,7 @@ func InfoByID(db *sql.DB, tableName string, id int) (*Banner, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		if err := rows.Scan(&ban.BannerID, &ban.Name, &ban.ImagePath, &ban.Event, &ban.StartDate, &ban.EndDate); err != nil {
+		if err := rows.Scan(&ban.BannerID, &ban.Name, &ban.ImagePath, &ban.EventPath, &ban.StartDate, &ban.EndDate); err != nil {
 			return nil, err
 		}
 	}

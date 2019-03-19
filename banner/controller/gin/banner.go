@@ -1,3 +1,8 @@
+/*
+ * Revision History:
+ *     Initial: 2019/03/18        Yang ChengKai
+ */
+
 package controller
 
 import (
@@ -46,7 +51,7 @@ func (b *BannerController) create(c *gin.Context) {
 		req struct {
 			Name      string    `json:"name"`
 			ImagePath string    `json:"imageurl"`
-			Event     string    `json:"eventurl"`
+			EventPath string    `json:"eventurl"`
 			StartDate time.Time `json:"startDate"`
 			EndDate   time.Time `json:"endDate"`
 		}
@@ -59,7 +64,7 @@ func (b *BannerController) create(c *gin.Context) {
 		return
 	}
 
-	id, err := mysql.InsertBanner(b.db, b.tableName, req.Name, req.ImagePath, req.Event, req.StartDate, req.EndDate)
+	id, err := mysql.InsertBanner(b.db, b.tableName, req.Name, req.ImagePath, req.EventPath, req.StartDate, req.EndDate)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
