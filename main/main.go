@@ -6,6 +6,7 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt"
 	admin "github.com/fengyfei/comet/admin/controller/gin"
+	banner "github.com/fengyfei/comet/banner/controller/gin"
 	category "github.com/fengyfei/comet/category/controller/gin"
 	order "github.com/fengyfei/comet/order/controller/gin"
 	permission "github.com/fengyfei/comet/permission/controller/gin"
@@ -47,10 +48,12 @@ func main() {
 	router.Use(permission.CheckPermission(p, getUID))
 
 	u := upload.New(dbConn, "http://0.0.0.1:9573", getUID)
+	b := banner.New(dbConn, "banner")
 
 	a.RegisterRouter(router.Group("/api/v1/admin"))
 	p.RegisterRouter(router.Group("/api/v1/permission"))
 	u.RegisterRouter(router.Group("/api/v1/user"))
+	b.RegisterRouter(router.Group("/api/v1/banner"))
 
 	category.Register(dbConn, "students", "test", router)
 

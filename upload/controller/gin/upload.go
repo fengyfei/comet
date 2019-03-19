@@ -1,25 +1,15 @@
 package controller
 
 import (
-	"crypto/md5"
 	"database/sql"
-	"encoding/hex"
 	"errors"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"path"
 
+	MD "github.com/fengyfei/comet/pkgs/file"
 	mysql "github.com/fengyfei/comet/upload/model/mysql"
 	"github.com/gin-gonic/gin"
-)
-
-var (
-	fileMap = map[string]string{}
-	picture = []string{".jpg", ".png", ".jpeg", ".gif", ".bmp"}
-	video   = []string{".avi", ".wmv", ".mpg", ".mpeg", ".mpe", ".mov", ".rm", ".ram", ".swf", ".mp4", ".rmvb", ".asf", ".divx", ".vob"}
-	fileDir = filePath()
 )
 
 var (
@@ -42,7 +32,7 @@ const (
 	OtherDir = "other"
 )
 
-//UploadController -
+// UploadController -
 type UploadController struct {
 	db      *sql.DB
 	BaseURL string
@@ -69,7 +59,7 @@ func (u *UploadController) RegisterRouter(r gin.IRouter) {
 		log.Fatal(err)
 	}
 
-	err = checkDir(PictureDir, VideoDir, OtherDir)
+	err = MD.CheckDir(PictureDir, VideoDir, OtherDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,23 +67,6 @@ func (u *UploadController) RegisterRouter(r gin.IRouter) {
 	r.POST("/upload", u.upload)
 }
 
-func checkDir(path ...string) error {
-	for _, name := range path {
-		_, err := os.Stat(FileUploadDir + "/" + name)
-		if err != nil {
-			if os.IsNotExist(err) {
-				err = os.MkdirAll(FileUploadDir+"/"+name, 0777)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-// Upload single file upload
 func (u *UploadController) upload(c *gin.Context) {
 	if c.Request.Method != "POST" {
 		c.Error(errRequest)
@@ -126,7 +99,7 @@ func (u *UploadController) upload(c *gin.Context) {
 		return
 	}
 
-	MD5Str, err := MD5(file)
+	MD5Str, err := MD.MD5(file)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"status": http.StatusMethodNotAllowed})
@@ -146,9 +119,9 @@ func (u *UploadController) upload(c *gin.Context) {
 	}
 
 	fileSuffix := path.Ext(header.Filename)
-	filePath = FileUploadDir + "/" + classifyBySuffix(fileSuffix) + "/" + MD5Str + fileSuffix
+	filePath = FileUploadDir + "/" + MD.ClassifyBySuffix(fileSuffix) + "/" + MD5Str + fileSuffix
 
-	err = copyFile(filePath, file)
+	err = MD.CopyFile(filePath, file)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusPreconditionFailed, gin.H{"status": http.StatusPreconditionFailed})
@@ -163,47 +136,4 @@ func (u *UploadController) upload(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "URL": u.BaseURL + filePath})
-}
-
-func filePath() map[string]string {
-	for _, suffix := range picture {
-		fileMap[suffix] = PictureDir
-	}
-
-	for _, suffix := range video {
-		fileMap[suffix] = VideoDir
-	}
-
-	return fileMap
-}
-
-func classifyBySuffix(suffix string) string {
-
-	if dir := fileDir[suffix]; dir != "" {
-		return dir
-	}
-	return OtherDir
-}
-
-// MD5 -
-func MD5(file io.Reader) (string, error) {
-	sum := md5.New()
-	_, err := io.Copy(sum, file)
-	if err != nil {
-		return "", err
-	}
-
-	MD5Str := hex.EncodeToString(sum.Sum(nil))
-	return MD5Str, nil
-}
-
-func copyFile(path string, file io.Reader) error {
-	cur, err := os.Create(path)
-	defer cur.Close()
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(cur, file)
-	return err
 }
