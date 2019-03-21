@@ -12,10 +12,6 @@ import (
 	"time"
 )
 
-var (
-	errInvalidInsert = errors.New("insert banner:insert affected 0 rows")
-)
-
 // Banner -
 type Banner struct {
 	BannerID  int
@@ -35,12 +31,14 @@ const (
 )
 
 var (
+	errInvalidInsert = errors.New("insert banner:insert affected 0 rows")
+
 	bannerSQLString = []string{
 		`CREATE TABLE IF NOT EXISTS %s (
 			bannerId    INT NOT NULL AUTO_INCREMENT,
 			name        VARCHAR(512) UNIQUE DEFAULT NULL,
 			imagePath   VARCHAR(512) DEFAULT NULL,
-			eventPath       VARCHAR(512) DEFAULT NULL,
+			eventPath   VARCHAR(512) DEFAULT NULL,
 			startDate   DATETIME NOT NULL,
 			endDate     DATETIME NOT NULL,
 			PRIMARY KEY (bannerId)
