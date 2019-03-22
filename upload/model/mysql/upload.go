@@ -1,6 +1,6 @@
 /*
  * Revision History:
- *     Initial: 2018/08/10        Yznf ChengKai
+ *     Initial: 2018/08/10        Yang ChengKai
  */
 
 package mysql
