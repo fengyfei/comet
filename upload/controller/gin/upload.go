@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"path"
 
-	MD "github.com/fengyfei/comet/pkgs/file"
+	md "github.com/fengyfei/comet/pkgs/file"
 	mysql "github.com/fengyfei/comet/upload/model/mysql"
 	"github.com/gin-gonic/gin"
 )
@@ -59,7 +59,7 @@ func (u *UploadController) RegisterRouter(r gin.IRouter) {
 		log.Fatal(err)
 	}
 
-	err = MD.CheckDir(PictureDir, VideoDir, OtherDir)
+	err = md.CheckDir(PictureDir, VideoDir, OtherDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func (u *UploadController) upload(c *gin.Context) {
 		return
 	}
 
-	MD5Str, err := MD.MD5(file)
+	MD5Str, err := md.MD5(file)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"status": http.StatusMethodNotAllowed})
@@ -119,9 +119,9 @@ func (u *UploadController) upload(c *gin.Context) {
 	}
 
 	fileSuffix := path.Ext(header.Filename)
-	filePath = FileUploadDir + "/" + MD.ClassifyBySuffix(fileSuffix) + "/" + MD5Str + fileSuffix
+	filePath = FileUploadDir + "/" + md.ClassifyBySuffix(fileSuffix) + "/" + MD5Str + fileSuffix
 
-	err = MD.CopyFile(filePath, file)
+	err = md.CopyFile(filePath, file)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusPreconditionFailed, gin.H{"status": http.StatusPreconditionFailed})
