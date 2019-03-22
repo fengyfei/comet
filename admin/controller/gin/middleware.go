@@ -20,30 +20,6 @@ var (
 	errUserIDNotExists = errors.New("Get Admin ID is wrong")
 )
 
-/*
-// GinJWTAuthenticator -
-func GinJWTAuthenticator(c *Controller) func(c *gin.Context) (interface{}, error) {
-	return func(ctx *gin.Context) (interface{}, error) {
-		return c.Login(ctx)
-	}
-}
-
-//GinJWTPayloadFunc -
-func GinJWTPayloadFunc() func(interface{}) ginjwt.MapClaims {
-	return func(data interface{}) ginjwt.MapClaims {
-		return ginjwt.MapClaims{
-			"userID": data,
-		}
-	}
-}
-
-//GinJWTIdentityHandler -
-func GinJWTIdentityHandler() func(claims jwt.MapClaims) interface{} {
-	return func(claims jwt.MapClaims) interface{} {
-		return claims["userID"]
-	}
-} */
-
 //ExtendJWTMiddleWare -
 func (c *Controller) ExtendJWTMiddleWare(JWTMiddleware *ginjwt.GinJWTMiddleware) func(ctx *gin.Context) (uint32, error) {
 	JWTMiddleware.Authenticator = func(ctx *gin.Context) (interface{}, error) {
