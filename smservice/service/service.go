@@ -221,17 +221,22 @@ func Check(code, sign string, conf *Config, db *sql.DB) error {
 	//验证超时
 
 	//验证
-	if sms.Code == sms.getCode(db) {
+	getcode, err := sms.getCode(db)
+	if err != nil {
+		return errors.New("Sign error")
+	}
+
+	if sms.Code == getcode {
 		sms.delete(sms.Sign, db)
 		return nil
 	}
 
-	return errors.New("未知错误")
+	return errors.New("Code error")
 }
 
-func (sms *SMS) getCode(db *sql.DB) string {
-	code, _ := mysql.GetCode(db, sms.Sign)
-	return code
+func (sms *SMS) getCode(db *sql.DB) (string, error) {
+	code, err := mysql.GetCode(db, sms.Sign)
+	return code, err
 }
 
 //删除数据库数据
