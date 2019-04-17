@@ -165,6 +165,9 @@ func (sms *SMS) sendmsg(conf *Config) error {
 	client := &http.Client{}
 
 	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
 	request.Header.Add("Authorization", "APPCODE "+conf.Appcode)
 
 	response, err := client.Do(request)
