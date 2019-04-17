@@ -218,6 +218,9 @@ func AddURLPermission(db *sql.DB, rid uint32, url string) error {
 	}
 
 	_, err = db.Exec(permissionSQLString[mysqlPermissionInstert], url, rid)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

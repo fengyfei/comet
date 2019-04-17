@@ -148,11 +148,9 @@ func VailMobile(mobile string) error {
 //发送后存储这个信息：手机号,时间，验证码
 //存储入数据库
 func (sms *SMS) save(db *sql.DB) error {
-	if err := mysql.Insert(db, sms.Mobile, sms.Date, sms.Code, sms.Sign); err != nil {
-		return err
-	}
+	err := mysql.Insert(db, sms.Mobile, sms.Date, sms.Code, sms.Sign)
 
-	return nil
+	return err
 }
 
 //实现一个可以直接改配置就能用的send方法
@@ -205,11 +203,9 @@ func Send(mobile, sign string, conf *Config, db *sql.DB) error {
 		return err
 	}
 
-	if err := sms.sendmsg(conf); err != nil {
-		return err
-	}
+	err := sms.sendmsg(conf)
 
-	return nil
+	return err
 }
 
 //Check 根据sign和验证码，返回nil表示成功

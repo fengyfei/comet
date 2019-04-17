@@ -8,6 +8,7 @@ package controller
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"path"
@@ -113,6 +114,7 @@ func (u *UploadController) upload(c *gin.Context) {
 
 	filePath, err := mysql.QueryByMD5(u.db, MD5Str)
 	if err == nil {
+		fmt.Println("The file already exists:", filePath)
 		c.JSON(http.StatusNotAcceptable, gin.H{"status": http.StatusNotAcceptable})
 		return
 	}
