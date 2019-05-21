@@ -3,7 +3,6 @@ package md
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"io"
 	"os"
 )
 
@@ -48,26 +47,24 @@ func ClassifyBySuffix(suffix string) string {
 }
 
 // MD5 -
-func MD5(file io.Reader) (string, error) {
+func MD5(file []byte) (string, error) {
 	sum := md5.New()
-	_, err := io.Copy(sum, file)
-	if err != nil {
-		return "", err
-	}
+
+	sum.Write(file)
 
 	MD5Str := hex.EncodeToString(sum.Sum(nil))
 	return MD5Str, nil
 }
 
 // CopyFile -
-func CopyFile(path string, file io.Reader) error {
+func CopyFile(path string, file []byte) error {
 	cur, err := os.Create(path)
 	defer cur.Close()
 	if err != nil {
 		return err
 	}
 
-	_, err = io.Copy(cur, file)
+	_, err = cur.Write(file)
 	return err
 }
 

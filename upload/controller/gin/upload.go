@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"path"
@@ -105,7 +106,9 @@ func (u *UploadController) upload(c *gin.Context) {
 		return
 	}
 
-	MD5Str, err := md.MD5(file)
+	newfile, _ := ioutil.ReadAll(file)
+
+	MD5Str, err := md.MD5(newfile)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"status": http.StatusMethodNotAllowed})
@@ -128,7 +131,7 @@ func (u *UploadController) upload(c *gin.Context) {
 	fileSuffix := path.Ext(header.Filename)
 	filePath = FileUploadDir + "/" + md.ClassifyBySuffix(fileSuffix) + "/" + MD5Str + fileSuffix
 
-	err = md.CopyFile(filePath, file)
+	err = md.CopyFile(filePath, newfile)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusPreconditionFailed, gin.H{"status": http.StatusPreconditionFailed})
