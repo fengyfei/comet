@@ -49,7 +49,7 @@ func (c *Controller) RegisterRouter(r gin.IRouter) {
 func (c *Controller) create(ctx *gin.Context) {
 	var admin struct {
 		Name     string `json:"name"      binding:"required,alphanum,min=5,max=30"`
-		Password string `json:"password"  binding:"printascii,min=6,max=30"`
+		Password string `json:"password"  binding:"printascii,max=30"`
 	}
 
 	err := ctx.ShouldBind(&admin)
