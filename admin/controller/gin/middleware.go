@@ -20,7 +20,7 @@ var (
 	errUserIDNotExists = errors.New("Get Admin ID is wrong")
 )
 
-//ExtendJWTMiddleWare -
+//ExtendJWTMiddleWare extend JWTMiddleWare
 func (c *Controller) ExtendJWTMiddleWare(JWTMiddleware *ginjwt.GinJWTMiddleware) func(ctx *gin.Context) (uint32, error) {
 	JWTMiddleware.Authenticator = func(ctx *gin.Context) (interface{}, error) {
 		return c.Login(ctx)
@@ -47,7 +47,7 @@ func (c *Controller) ExtendJWTMiddleWare(JWTMiddleware *ginjwt.GinJWTMiddleware)
 	}
 }
 
-//CheckActive -
+//CheckActive middleware that checks the active
 func CheckActive(c *Controller, getUID func(ctx *gin.Context) (uint32, error)) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
 		a, err := getUID(ctx)

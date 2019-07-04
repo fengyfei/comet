@@ -290,7 +290,7 @@ func Permissions(db *sql.DB) (*[]*Permission, error) {
 	return &result, nil
 }
 
-// AddRelation -
+// AddRelation add an relation
 func AddRelation(db *sql.DB, aid, rid uint32) error {
 	adminIsActive, err := mysql.IsActive(db, aid)
 	if err != nil {
@@ -322,7 +322,7 @@ func AddRelation(db *sql.DB, aid, rid uint32) error {
 	return nil
 }
 
-// RemoveRelation -
+// RemoveRelation delate an relation
 func RemoveRelation(db *sql.DB, aid, rid uint32) error {
 	adminIsActive, err := mysql.IsActive(db, aid)
 	if err != nil {

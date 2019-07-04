@@ -14,19 +14,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Controller -
+// Controller external service interface
 type Controller struct {
 	db *sql.DB
 }
 
-// New -
+// New create an external service interface
 func New(db *sql.DB) *Controller {
 	return &Controller{
 		db: db,
 	}
 }
 
-//RegisterRouter -
+//RegisterRouter register router
 func (c *Controller) RegisterRouter(r gin.IRouter) {
 	err := mysql.CreateTable(c.db)
 	if err != nil {

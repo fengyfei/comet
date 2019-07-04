@@ -61,7 +61,7 @@ func CreateTable(db *sql.DB, name, password *string) error {
 	return nil
 }
 
-//Create -
+//Create create an administrative user
 func Create(db *sql.DB, name, password *string) error {
 	hash, err := salt.Generate(password)
 	if err != nil {
@@ -80,7 +80,7 @@ func Create(db *sql.DB, name, password *string) error {
 	return nil
 }
 
-//Login -
+//Login the administrative user logins
 func Login(db *sql.DB, name, password *string) (uint32, error) {
 	var (
 		id  uint32
@@ -99,7 +99,7 @@ func Login(db *sql.DB, name, password *string) (uint32, error) {
 	return id, nil
 }
 
-// ModifyEmail -
+// ModifyEmail the administrative user updates email
 func ModifyEmail(db *sql.DB, id uint32, email *string) error {
 
 	result, err := db.Exec(adminSQLString[mysqlUserModifyEmail], email, id)
@@ -114,7 +114,7 @@ func ModifyEmail(db *sql.DB, id uint32, email *string) error {
 	return nil
 }
 
-// ModifyMobile -
+// ModifyMobile the administrative user updates mobile
 func ModifyMobile(db *sql.DB, id uint32, mobile *string) error {
 
 	result, err := db.Exec(adminSQLString[mysqlUserModifyMobile], mobile, id)
@@ -129,7 +129,7 @@ func ModifyMobile(db *sql.DB, id uint32, mobile *string) error {
 	return nil
 }
 
-// ModifyPassword -
+// ModifyPassword the administrative user updates password
 func ModifyPassword(db *sql.DB, id uint32, password, newPassword *string) error {
 	var (
 		pwd string
@@ -154,7 +154,7 @@ func ModifyPassword(db *sql.DB, id uint32, password, newPassword *string) error 
 	return err
 }
 
-//ModifyAdminActive -
+//ModifyAdminActive the administrative user updates active
 func ModifyAdminActive(db *sql.DB, id uint32, active bool) error {
 	result, err := db.Exec(adminSQLString[mysqlUserModifyActive], active, id)
 	if err != nil {

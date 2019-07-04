@@ -14,12 +14,12 @@ import (
 )
 
 var (
-	//FirstURL -
+	//FirstURL for check whether they meet the requirements to execution middleware
 	FirstURL      = "/api/v1/permission/addurl"
 	errPermission = errors.New("Admin permission is wrong")
 )
 
-//CheckPermission -
+//CheckPermission middleware that checks the permission
 func CheckPermission(c *Controller, getUID func(ctx *gin.Context) (uint32, error)) func(c *gin.Context) {
 	return func(ctx *gin.Context) {
 		var check = false

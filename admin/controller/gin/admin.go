@@ -14,19 +14,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Controller -
+// Controller external service interface
 type Controller struct {
 	db *sql.DB
 }
 
-// New -
+// New create an external service interface
 func New(db *sql.DB) *Controller {
 	return &Controller{
 		db: db,
 	}
 }
 
-// RegisterRouter -
+// RegisterRouter register router
 func (c *Controller) RegisterRouter(r gin.IRouter) {
 	if r == nil {
 		log.Fatal("[InitRouter]: server is nil")
@@ -43,7 +43,7 @@ func (c *Controller) RegisterRouter(r gin.IRouter) {
 	r.POST("/modify/email", c.modifyEmail)
 	r.POST("/modify/mobile", c.modifyMobile)
 	r.POST("/modify/password", c.modifyPassword)
-	r.POST("/modify/active", c.ModifyAdminActive)
+	r.POST("/modify/active", c.modifyAdminActive)
 }
 
 func (c *Controller) create(ctx *gin.Context) {
@@ -163,8 +163,7 @@ func (c *Controller) modifyPassword(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
 }
 
-//ModifyAdminActive -
-func (c *Controller) ModifyAdminActive(ctx *gin.Context) {
+func (c *Controller) modifyAdminActive(ctx *gin.Context) {
 	var (
 		admin struct {
 			CheckID     uint32 `json:"check_id"    binding:"required"`
@@ -189,7 +188,7 @@ func (c *Controller) ModifyAdminActive(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
 }
 
-//Login -
+//Login JWT validation
 func (c *Controller) Login(ctx *gin.Context) (uint32, error) {
 	var (
 		admin struct {
