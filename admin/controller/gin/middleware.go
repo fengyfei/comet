@@ -63,7 +63,8 @@ func CheckActive(c *Controller, getUID func(ctx *gin.Context) (uint32, error)) f
 		}
 
 		if !active {
-			ctx.AbortWithError(http.StatusServiceUnavailable, errActive)
+			ctx.AbortWithError(http.StatusLocked, errActive)
+			ctx.JSON(http.StatusLocked, gin.H{"status": http.StatusLocked})
 			return
 		}
 	}
