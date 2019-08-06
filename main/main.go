@@ -32,7 +32,7 @@ func main() {
 
 	router := gin.Default()
 
-	dbConn, err := sql.Open("mysql", "root:123456@tcp(127.0.0.1:3306)/test")
+	dbConn, err := sql.Open("mysql", "root:111111@tcp(127.0.0.1:3306)/test")
 	if err != nil {
 		panic(err)
 	}

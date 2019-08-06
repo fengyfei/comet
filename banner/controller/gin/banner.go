@@ -49,11 +49,11 @@ func (b *BannerController) RegisterRouter(r gin.IRouter) {
 func (b *BannerController) create(c *gin.Context) {
 	var (
 		req struct {
-			Name      string    `json:"name"`
-			ImagePath string    `json:"imageurl"`
-			EventPath string    `json:"eventurl"`
-			StartDate time.Time `json:"startDate"`
-			EndDate   time.Time `json:"endDate"`
+			Name      string    `json:"name"      binding:"required"`
+			ImagePath string    `json:"imageurl"  binding:"required"`
+			EventPath string    `json:"eventurl"  binding:"required"`
+			StartDate time.Time `json:"start_date"`
+			EndDate   time.Time `json:"end_date"`
 		}
 	)
 
@@ -77,7 +77,7 @@ func (b *BannerController) create(c *gin.Context) {
 func (b *BannerController) lisitValidBannerByUnixDate(c *gin.Context) {
 	var (
 		req struct {
-			Unixtime int64 `json:"unixtime"`
+			Unixtime int64 `json:"unixtime"    binding:"required"`
 		}
 	)
 
@@ -101,7 +101,7 @@ func (b *BannerController) lisitValidBannerByUnixDate(c *gin.Context) {
 func (b *BannerController) infoByID(c *gin.Context) {
 	var (
 		req struct {
-			ID int `json:"id"`
+			ID int `json:"id"     binding:"required"`
 		}
 	)
 
@@ -125,7 +125,7 @@ func (b *BannerController) infoByID(c *gin.Context) {
 func (b *BannerController) deleteByID(c *gin.Context) {
 	var (
 		req struct {
-			ID int `json:"id"`
+			ID int `json:"id"    binding:"required"`
 		}
 	)
 

@@ -47,16 +47,31 @@ func (c *Controller) RegisterRouter(r gin.IRouter) {
 }
 
 func (c *Controller) create(ctx *gin.Context) {
-	var admin struct {
-		Name     string `json:"name"      binding:"required,alphanum,min=5,max=30"`
-		Password string `json:"password"  binding:"printascii,max=30"`
-	}
+	var (
+		admin struct {
+			Name     string `json:"name"      binding:"required,alphanum,min=5,max=30"`
+			Password string `json:"password"`
+		}
+
+		pw struct {
+			Password string `json:"password"  binding:"printascii,min=6,max=30"`
+		}
+	)
 
 	err := ctx.ShouldBind(&admin)
 	if err != nil {
 		ctx.Error(err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		return
+	}
+
+	if admin.Password != "" {
+		err = ctx.ShouldBind(&pw)
+		if err != nil {
+			ctx.Error(err)
+			ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
+			return
+		}
 	}
 
 	//Default password
@@ -127,10 +142,10 @@ func (c *Controller) modifyMobile(ctx *gin.Context) {
 func (c *Controller) modifyPassword(ctx *gin.Context) {
 	var (
 		admin struct {
-			AdminID     uint32 `json:"admin_id"      binding:"required"`
-			Password    string `json:"password"      binding:"printascii,min=6,max=30"`
-			NewPassword string `json:"newpassword"   binding:"printascii,min=6,max=30"`
-			Confirm     string `json:"confirm"       binding:"printascii,min=6,max=30"`
+			AdminID     uint32 `json:"admin_id"       binding:"required"`
+			Password    string `json:"password"       binding:"printascii,min=6,max=30"`
+			NewPassword string `json:"new_password"   binding:"printascii,min=6,max=30"`
+			Confirm     string `json:"confirm"        binding:"printascii,min=6,max=30"`
 		}
 	)
 
