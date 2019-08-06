@@ -60,7 +60,7 @@ func CheckPermission(c *Controller, getUID func(ctx *gin.Context) (uint32, error
 		for urlkey := range urlRole {
 			for adkey := range adRole {
 				if urlkey == adkey {
-					check = false
+					check = true
 				}
 			}
 		}
