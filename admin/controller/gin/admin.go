@@ -50,11 +50,7 @@ func (c *Controller) create(ctx *gin.Context) {
 	var (
 		admin struct {
 			Name     string `json:"name"      binding:"required,alphanum,min=5,max=30"`
-			Password string `json:"password"`
-		}
-
-		pw struct {
-			Password string `json:"password"  binding:"printascii,min=6,max=30"`
+			Password string `json:"password"  binding:"omitempty,min=5,max=30"`
 		}
 	)
 
@@ -63,15 +59,6 @@ func (c *Controller) create(ctx *gin.Context) {
 		ctx.Error(err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
 		return
-	}
-
-	if admin.Password != "" {
-		err = ctx.ShouldBind(&pw)
-		if err != nil {
-			ctx.Error(err)
-			ctx.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
-			return
-		}
 	}
 
 	//Default password
