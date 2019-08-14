@@ -37,8 +37,8 @@ var (
 
 // Category -
 type Category struct {
-	CategoryId uint
-	ParentId   uint //为0则是根目录
+	CategoryID uint
+	ParentID   uint //为0则是根目录
 	Name       string
 	Status     int8
 	CreateTime time.Time
@@ -51,10 +51,10 @@ func CreateTable(db *sql.DB, tableName string) error {
 	return err
 }
 
-//自动设定 id 和 status状态和 创建时间 -
-func InsertCategory(db *sql.DB, tableName string, parentId uint, name string) (uint, error) {
+//InsertCategory 自动设定 id 和 status状态和 创建时间 -
+func InsertCategory(db *sql.DB, tableName string, parentID uint, name string) (uint, error) {
 	sql := fmt.Sprintf(categorySQLFormatStr[mysqlInsert], tableName)
-	result, err := db.Exec(sql, parentId, name)
+	result, err := db.Exec(sql, parentID, name)
 	if err != nil {
 		return 0, err
 	}
@@ -71,7 +71,7 @@ func InsertCategory(db *sql.DB, tableName string, parentId uint, name string) (u
 	return uint(categoryId), nil
 }
 
-//改变目录状态
+//ChangeCategoryStatus 改变目录状态
 func ChangeCategoryStatus(db *sql.DB, tableName string, category uint, status int8) error {
 	sql := fmt.Sprintf(categorySQLFormatStr[mysqlUpdateStatus], tableName)
 	result, err := db.Exec(sql, status, category)
@@ -86,7 +86,7 @@ func ChangeCategoryStatus(db *sql.DB, tableName string, category uint, status in
 	return nil
 }
 
-//改变目录名称
+//ChangeCategoryName 改变目录名称
 func ChangeCategoryName(db *sql.DB, tableName string, category uint, name string) error {
 	sql := fmt.Sprintf(categorySQLFormatStr[mysqlUpdateName], tableName)
 	result, err := db.Exec(sql, name, category)
@@ -101,10 +101,10 @@ func ChangeCategoryName(db *sql.DB, tableName string, category uint, name string
 	return nil
 }
 
-// LisitChirldrenByParentId -
-func LisitChirldrenByParentId(db *sql.DB, tableName string, parentId uint) ([]*Category, error) {
+// LisitChirldrenByParentID -
+func LisitChirldrenByParentID(db *sql.DB, tableName string, parentID uint) ([]*Category, error) {
 	var (
-		categoryId uint
+		categoryID uint
 		name       string
 		status     int8
 		creatTime  time.Time
@@ -112,20 +112,20 @@ func LisitChirldrenByParentId(db *sql.DB, tableName string, parentId uint) ([]*C
 		categorys []*Category
 	)
 	sql := fmt.Sprintf(categorySQLFormatStr[mysqlSelectByParentID], tableName)
-	rows, err := db.Query(sql, parentId)
+	rows, err := db.Query(sql, parentID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		if err := rows.Scan(&categoryId, &parentId, &name, &status, &creatTime); err != nil {
+		if err := rows.Scan(&categoryID, &parentID, &name, &status, &creatTime); err != nil {
 			return nil, err
 		}
 
 		category := &Category{
-			CategoryId: categoryId,
-			ParentId:   parentId,
+			CategoryID: categoryID,
+			ParentID:   parentID,
 			Name:       name,
 			Status:     status,
 			CreateTime: creatTime,
