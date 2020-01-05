@@ -145,7 +145,7 @@ func (con *Controller) LisitChirldrenByParentID(c *gin.Context) {
 		return
 	}
 
-	list, err := mysql.LisitChirldrenByParentId(con.db, con.tableName, req.ParentID)
+	list, err := mysql.LisitChirldrenByParentID(con.db, con.tableName, req.ParentID)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": http.StatusBadRequest})
